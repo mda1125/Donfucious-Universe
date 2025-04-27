@@ -1,0 +1,34 @@
+# _config.yml for Donfucious.com
+
+title: Donfucious.com
+description: >
+  The Loudest Wisdom in Fictional History.
+  History will thank me. Again.
+baseurl: "" # Leave blank if deploying to root
+url: "https://donfucious.com" # Your domain
+theme: minima
+
+# Build settings
+markdown: kramdown
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+
+# SEO settings
+author: Donfucious
+lang: en
+logo: /assets/images/logo.png # If you add one later
+social_links:
+  twitter: https://twitter.com/
+  github: https://github.com/
+
+# Custom variables (optional for later use)
+donfucious_quote: "Victory is assumed. History is optional."
+
+# Exclude from processing
+exclude:
+  - README.md
+  - CONTRIBUTING.md
+  - CODE_OF_CONDUCT.md
+  - ROADMAP.md
+  - TODO.md
