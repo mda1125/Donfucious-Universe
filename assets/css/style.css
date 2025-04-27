@@ -158,3 +158,26 @@ footer {
 .centered {
     text-align: center;
 }
+
+/* About Section Styles */
+#about {
+    background-color: #f9f9f9;
+    font-weight: bold;
+    color: #1A1A40;
+}
+
+#about p {
+    max-width: 800px;
+    margin: 15px auto;
+    line-height: 1.8;
+}
+
+#about q {
+    font-style: italic;
+    color: #B22222; /* Deep Red from header */
+    font-size: 1.2em;
+}
+
+#about strong {
+    color: #B22222; /* Deep Red from header */
+}
