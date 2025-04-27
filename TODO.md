@@ -6,23 +6,23 @@ Small tasks that will create Loud History.
 
 ## Immediate Actions (Phase 1)
 
-- [ ] Upload `index.html` to the repo
-- [ ] Add `README.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `ROADMAP.md`
-- [ ] Set repository to Private (until launch ready)
-- [ ] Point Donfucious.com domain to GitHub Pages
-- [ ] Build out the basic About Donfucious section
-- [ ] Add 4–6 Donfucian Quotes to Quotes Section
-- [ ] Create first fake Campaign 2028 image/poster
+- [X] Upload `index.html` to the repo
+- [X] Add `README.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `ROADMAP.md`
+- [X] Set repository to Private (until launch ready)
+- [X] Point Donfucious.com domain to GitHub Pages
+- [X] Build out the basic About Donfucious section
+- [X] Add 4–6 Donfucian Quotes to Quotes Section
+- [X] Create first fake Campaign 2028 image/poster
 
 ---
 
 ## Near-Term Actions (Phase 2)
 
-- [ ] Add footer with Satire Disclaimer
-- [ ] Design first merch mockup page (even if static images)
+- [X] Add footer with Satire Disclaimer
+- [X] Design first merch mockup page (even if static images)
 - [ ] Expand Quotes Gallery to 12+ entries
 - [ ] Add “Meet the Endorsers” (ICE Barbie, Team Luigi, Baron Dealsworth)
-- [ ] Launch GitHub Pages publicly when MVP is polished
+- [X] Launch GitHub Pages publicly when MVP is polished
 
 ---
 
