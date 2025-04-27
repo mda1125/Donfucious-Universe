@@ -35,3 +35,9 @@
 - **Sizes**: One size fits most
 - **Humor**: Playful take on time, philosophy, and fashion
 - **Filename**: time-traveling-socks.jpg
+
+## 7. Trump Caricature Mug
+- **Description**: A satirical ceramic mug featuring an exaggerated caricature of Donald Trump, adorned with Donfucious-style philosophical quips
+- **Dimensions**: 11 oz white ceramic
+- **Humor**: Political satire meets philosophical wit
+- **Filename**: Trump Caricature on Ceramic Mug.png
