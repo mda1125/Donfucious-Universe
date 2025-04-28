@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Donfucious Blog - Official Loudness</title>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500&family=Open+Sans&display=swap" rel="stylesheet">
+  <link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    .blog-posts {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .blog-post {
+      background-color: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .blog-post h2 {
+      color: #FFD700;
+      margin-bottom: 10px;
+    }
+    .blog-post .date {
+      color: #888;
+      font-size: 0.9em;
+      margin-bottom: 15px;
+    }
+    .blog-post .content {
+      line-height: 1.6;
+    }
+    .home-button {
+      display: block;
+      width: 200px;
+      margin: 20px auto;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>THE DONFUCIOUS BLOG: LOUD THOUGHTS</h1>
+    <a href="index.html" class="button home-button">Home</a>
+  </header>
+
+  <section class="blog-posts" id="blog-posts">
+    <!-- Blog posts will be dynamically loaded here -->
+  </section>
+
+  <footer>
+    <p>This site is 100% satire. Donfucious is fictional. If you think this is real, you're ready to lead.</p>
+  </footer>
+
+  <script>
+    // Function to parse date from filename
+    function parseDateFromFilename(filename) {
+      const match = filename.match(/(\d{4}-\d{2}-\d{2})/);
+      return match ? match[1] : 'Unknown Date';
+    }
+
+    // Function to extract title from filename
+    function extractTitleFromFilename(filename) {
+      return filename
+        .replace(/^\d{4}-\d{2}-\d{2}-/, '')  // Remove date prefix
+        .replace(/\.md$/, '')  // Remove .md extension
+        .replace(/-/g, ' ')    // Replace hyphens with spaces
+        .replace(/\b\w/g, l => l.toUpperCase());  // Capitalize first letter of each word
+    }
+
+    // Fetch and render blog posts
+    async function loadBlogPosts() {
+      try {
+        const response = await fetch('_posts/list.php');
+        const posts = await response.json();
+        
+        // Sort posts by filename (date) in descending order
+        posts.sort((a, b) => b.localeCompare(a));
+        
+        const blogPostsContainer = document.getElementById('blog-posts');
+        
+        for (const postFilename of posts) {
+          if (!postFilename.endsWith('.md')) continue;
+          
+          const postResponse = await fetch(`_posts/${postFilename}`);
+          const postContent = await postResponse.text();
+          
+          const postDate = parseDateFromFilename(postFilename);
+          const postTitle = extractTitleFromFilename(postFilename);
+          
+          const postElement = document.createElement('div');
+          postElement.classList.add('blog-post');
+          postElement.innerHTML = `
+            <h2>${postTitle}</h2>
+            <div class="date">${postDate}</div>
+            <div class="content">${marked.parse(postContent)}</div>
+          `;
+          
+          blogPostsContainer.appendChild(postElement);
+        }
+      } catch (error) {
+        console.error('Error loading blog posts:', error);
+        document.getElementById('blog-posts').innerHTML = 
+          '<p>Error loading blog posts. Please try again later.</p>';
+      }
+    }
+
+    // Load posts when page loads
+    document.addEventListener('DOMContentLoaded', loadBlogPosts);
+  </script>
+</body>
+</html>
