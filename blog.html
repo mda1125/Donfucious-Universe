@@ -74,37 +74,64 @@
     // Fetch and render blog posts
     async function loadBlogPosts() {
       try {
-        const response = await fetch('_posts/list.php');
+        // Attempt to fetch posts list, with fallback for local file loading
+        let response;
+        try {
+          response = await fetch('_posts/posts.json');
+          if (!response.ok) throw new Error('Failed to fetch posts.json');
+        } catch (jsonError) {
+          console.warn('Failed to fetch posts.json, attempting list.php fallback', jsonError);
+          response = await fetch('_posts/list.php');
+        }
+        
         const posts = await response.json();
         
         // Sort posts by filename (date) in descending order
         posts.sort((a, b) => b.localeCompare(a));
         
         const blogPostsContainer = document.getElementById('blog-posts');
+        blogPostsContainer.innerHTML = ''; // Clear any existing content
         
+        // Fetch and render each post with improved error handling
         for (const postFilename of posts) {
           if (!postFilename.endsWith('.md')) continue;
           
-          const postResponse = await fetch(`_posts/${postFilename}`);
-          const postContent = await postResponse.text();
-          
-          const postDate = parseDateFromFilename(postFilename);
-          const postTitle = extractTitleFromFilename(postFilename);
-          
-          const postElement = document.createElement('div');
-          postElement.classList.add('blog-post');
-          postElement.innerHTML = `
-            <h2>${postTitle}</h2>
-            <div class="date">${postDate}</div>
-            <div class="content">${marked.parse(postContent)}</div>
-          `;
-          
-          blogPostsContainer.appendChild(postElement);
+          try {
+            const postResponse = await fetch(`_posts/${postFilename}`);
+            
+            // Handle potential file loading issues
+            if (!postResponse.ok) {
+              console.warn(`Failed to load post: ${postFilename}`);
+              continue;
+            }
+            
+            const postContent = await postResponse.text();
+            
+            const postDate = parseDateFromFilename(postFilename);
+            const postTitle = extractTitleFromFilename(postFilename);
+            
+            const postElement = document.createElement('div');
+            postElement.classList.add('blog-post');
+            postElement.innerHTML = `
+              <h2>${postTitle}</h2>
+              <div class="date">${postDate}</div>
+              <div class="content">${marked.parse(postContent)}</div>
+            `;
+            
+            blogPostsContainer.appendChild(postElement);
+          } catch (postError) {
+            console.error(`Error loading post ${postFilename}:`, postError);
+          }
+        }
+        
+        // Add a message if no posts were loaded
+        if (blogPostsContainer.children.length === 0) {
+          blogPostsContainer.innerHTML = '<p>No blog posts found.</p>';
         }
       } catch (error) {
-        console.error('Error loading blog posts:', error);
-        document.getElementById('blog-posts').innerHTML = 
-          '<p>Error loading blog posts. Please try again later.</p>';
+        console.error('Critical error loading blog posts:', error);
+        document.getElementById('blog-posts').innerHTML =
+          '<p>Error loading blog posts. Please check your local file setup or server configuration.</p>';
       }
     }
 
