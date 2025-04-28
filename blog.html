@@ -7,6 +7,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500&family=Open+Sans&display=swap" rel="stylesheet">
   <link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
   <link rel="stylesheet" href="assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
     .blog-posts {
@@ -67,21 +68,64 @@
     async function loadBlogPosts() {
       const blogPostsContainer = document.getElementById('blog-posts');
       
+      // Construct absolute URLs for GitHub Pages
+      const baseUrl = window.location.origin + window.location.pathname.split('/').slice(0, -1).join('/') + '/';
+      const absoluteUrls = {
+        postsContent: new URL('_posts/posts-content.json', baseUrl).href,
+        postsList: new URL('_posts/posts.json', baseUrl).href,
+        postsPhp: new URL('_posts/list.php', baseUrl).href
+      };
+
+      // Predefined fallback posts with absolute file paths
+      const fallbackPosts = [
+        {
+          filename: '2024-05-01-coming-soon-from-donfucious.md',
+          url: new URL('_posts/2024-05-01-coming-soon-from-donfucious.md', baseUrl).href
+        },
+        {
+          filename: '2024-05-02-donfucious-declares-victory-over-gravity.md',
+          url: new URL('_posts/2024-05-02-donfucious-declares-victory-over-gravity.md', baseUrl).href
+        }
+      ];
+      
       try {
-        // Determine the base path dynamically
-        const basePath = window.location.pathname.split('/').slice(0, -1).join('/') + '/';
-        
-        // Fetch strategies with new posts-content.json as primary method
+        // Enhanced fetch strategies with absolute URLs and robust error handling
         const fetchStrategies = [
-          () => fetch(`${basePath}_posts/posts-content.json`).then(r => r.json()),
-          () => fetch(`${basePath}_posts/posts.json`).then(r => r.json()),
-          () => fetch(`${basePath}_posts/list.php`).then(r => r.json()),
-          () => {
-            // Hardcoded fallback for GitHub Pages
-            return Promise.resolve([
-              '2024-05-01-coming-soon-from-donfucious.md',
-              '2024-05-02-donfucious-declares-victory-over-gravity.md'
-            ]);
+          async () => {
+            const response = await fetch(absoluteUrls.postsContent);
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            return await response.json();
+          },
+          async () => {
+            const response = await fetch(absoluteUrls.postsList);
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            return await response.json();
+          },
+          async () => {
+            const response = await fetch(absoluteUrls.postsPhp);
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            return await response.json();
+          },
+          async () => {
+            // Fallback to fetching individual Markdown files
+            const fallbackPostContents = await Promise.all(
+              fallbackPosts.map(async (post) => {
+                try {
+                  const response = await fetch(post.url);
+                  if (!response.ok) throw new Error(`Failed to fetch ${post.filename}`);
+                  const content = await response.text();
+                  return {
+                    title: post.filename.replace('.md', '').replace(/-/g, ' '),
+                    date: post.filename.split('-').slice(0, 3).join('-'),
+                    content: content
+                  };
+                } catch (error) {
+                  console.warn(`Fallback fetch failed for ${post.filename}:`, error);
+                  return null;
+                }
+              })
+            );
+            return fallbackPostContents.filter(post => post !== null);
           }
         ];
 
@@ -104,20 +148,39 @@
         
         blogPostsContainer.innerHTML = ''; // Clear any existing content
         
-        // Render each post
+        // Render each post with enhanced error handling
         for (const post of posts) {
           try {
             const postElement = document.createElement('div');
             postElement.classList.add('blog-post');
+            
+            // Sanitize and parse Markdown content
+            const sanitizedTitle = post.title ?
+              DOMPurify.sanitize(post.title) :
+              'Untitled Post';
+            const sanitizedDate = post.date ?
+              DOMPurify.sanitize(post.date) :
+              'Unknown Date';
+            const parsedContent = post.content ?
+              marked.parse(DOMPurify.sanitize(post.content)) :
+              '<p>No content available</p>';
+
             postElement.innerHTML = `
-              <h2>${post.title}</h2>
-              <div class="date">${post.date}</div>
-              <div class="content">${marked.parse(post.content)}</div>
+              <h2>${sanitizedTitle}</h2>
+              <div class="date">${sanitizedDate}</div>
+              <div class="content">${parsedContent}</div>
             `;
             
             blogPostsContainer.appendChild(postElement);
           } catch (postError) {
-            console.error(`Error rendering post ${post.title}:`, postError);
+            console.error(`Error rendering post:`, postError);
+            const errorPostElement = document.createElement('div');
+            errorPostElement.classList.add('blog-post', 'error-post');
+            errorPostElement.innerHTML = `
+              <h2>Post Rendering Error</h2>
+              <div class="error-message">Unable to render this post. Please try again later.</div>
+            `;
+            blogPostsContainer.appendChild(errorPostElement);
           }
         }
         
@@ -131,6 +194,7 @@
                 <li>Network connectivity issues</li>
                 <li>GitHub Pages configuration</li>
               </ul>
+              <p>Please check your repository settings and refresh the page.</p>
             </div>
           `;
         }
@@ -144,7 +208,8 @@
               <li>Incorrect repository setup</li>
               <li>GitHub Pages hosting problems</li>
             </ul>
-            <p>Please check your repository settings and file structure.</p>
+            <p>Please check your repository settings, file structure, and network connection.</p>
+            <p>Technical details: ${error.message}</p>
           </div>
         `;
       }
