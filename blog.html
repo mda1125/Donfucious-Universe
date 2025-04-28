@@ -63,21 +63,6 @@
   </footer>
 
   <script>
-    // Function to parse date from filename
-    function parseDateFromFilename(filename) {
-      const match = filename.match(/(\d{4}-\d{2}-\d{2})/);
-      return match ? match[1] : 'Unknown Date';
-    }
-
-    // Function to extract title from filename
-    function extractTitleFromFilename(filename) {
-      return filename
-        .replace(/^\d{4}-\d{2}-\d{2}-/, '')  // Remove date prefix
-        .replace(/\.md$/, '')  // Remove .md extension
-        .replace(/-/g, ' ')    // Replace hyphens with spaces
-        .replace(/\b\w/g, l => l.toUpperCase());  // Capitalize first letter of each word
-    }
-
     // Fetch and render blog posts
     async function loadBlogPosts() {
       const blogPostsContainer = document.getElementById('blog-posts');
@@ -86,9 +71,9 @@
         // Determine the base path dynamically
         const basePath = window.location.pathname.split('/').slice(0, -1).join('/') + '/';
         
-        // Attempt to fetch posts list with multiple fallback strategies
-        let posts = [];
+        // Fetch strategies with new posts-content.json as primary method
         const fetchStrategies = [
+          () => fetch(`${basePath}_posts/posts-content.json`).then(r => r.json()),
           () => fetch(`${basePath}_posts/posts.json`).then(r => r.json()),
           () => fetch(`${basePath}_posts/list.php`).then(r => r.json()),
           () => {
@@ -100,6 +85,7 @@
           }
         ];
 
+        let posts = [];
         for (const strategy of fetchStrategies) {
           try {
             posts = await strategy();
@@ -113,40 +99,25 @@
           throw new Error('No posts could be retrieved');
         }
         
-        // Sort posts by filename (date) in descending order
-        posts.sort((a, b) => b.localeCompare(a));
+        // Sort posts by date in descending order
+        posts.sort((a, b) => new Date(b.date) - new Date(a.date));
         
         blogPostsContainer.innerHTML = ''; // Clear any existing content
         
-        // Fetch and render each post with improved error handling
-        for (const postFilename of posts) {
-          if (!postFilename.endsWith('.md')) continue;
-          
+        // Render each post
+        for (const post of posts) {
           try {
-            const postResponse = await fetch(`${basePath}_posts/${postFilename}`);
-            
-            // Handle potential file loading issues
-            if (!postResponse.ok) {
-              console.warn(`Failed to load post: ${postFilename}`);
-              continue;
-            }
-            
-            const postContent = await postResponse.text();
-            
-            const postDate = parseDateFromFilename(postFilename);
-            const postTitle = extractTitleFromFilename(postFilename);
-            
             const postElement = document.createElement('div');
             postElement.classList.add('blog-post');
             postElement.innerHTML = `
-              <h2>${postTitle}</h2>
-              <div class="date">${postDate}</div>
-              <div class="content">${marked.parse(postContent)}</div>
+              <h2>${post.title}</h2>
+              <div class="date">${post.date}</div>
+              <div class="content">${marked.parse(post.content)}</div>
             `;
             
             blogPostsContainer.appendChild(postElement);
           } catch (postError) {
-            console.error(`Error loading post ${postFilename}:`, postError);
+            console.error(`Error rendering post ${post.title}:`, postError);
           }
         }
         
