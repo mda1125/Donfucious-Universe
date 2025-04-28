@@ -39,6 +39,13 @@
       margin: 20px auto;
       text-align: center;
     }
+    .error-message {
+      color: #ff4136;
+      text-align: center;
+      padding: 20px;
+      background-color: rgba(255, 65, 54, 0.1);
+      border-radius: 8px;
+    }
   </style>
 </head>
 <body>
@@ -73,23 +80,42 @@
 
     // Fetch and render blog posts
     async function loadBlogPosts() {
+      const blogPostsContainer = document.getElementById('blog-posts');
+      
       try {
-        // Attempt to fetch posts list, with fallback for local file loading
-        let response;
-        try {
-          response = await fetch('_posts/posts.json');
-          if (!response.ok) throw new Error('Failed to fetch posts.json');
-        } catch (jsonError) {
-          console.warn('Failed to fetch posts.json, attempting list.php fallback', jsonError);
-          response = await fetch('_posts/list.php');
-        }
+        // Determine the base path dynamically
+        const basePath = window.location.pathname.split('/').slice(0, -1).join('/') + '/';
         
-        const posts = await response.json();
+        // Attempt to fetch posts list with multiple fallback strategies
+        let posts = [];
+        const fetchStrategies = [
+          () => fetch(`${basePath}_posts/posts.json`).then(r => r.json()),
+          () => fetch(`${basePath}_posts/list.php`).then(r => r.json()),
+          () => {
+            // Hardcoded fallback for GitHub Pages
+            return Promise.resolve([
+              '2024-05-01-coming-soon-from-donfucious.md',
+              '2024-05-02-donfucious-declares-victory-over-gravity.md'
+            ]);
+          }
+        ];
+
+        for (const strategy of fetchStrategies) {
+          try {
+            posts = await strategy();
+            if (posts && posts.length) break;
+          } catch (strategyError) {
+            console.warn('Post fetch strategy failed:', strategyError);
+          }
+        }
+
+        if (!posts || !posts.length) {
+          throw new Error('No posts could be retrieved');
+        }
         
         // Sort posts by filename (date) in descending order
         posts.sort((a, b) => b.localeCompare(a));
         
-        const blogPostsContainer = document.getElementById('blog-posts');
         blogPostsContainer.innerHTML = ''; // Clear any existing content
         
         // Fetch and render each post with improved error handling
@@ -97,7 +123,7 @@
           if (!postFilename.endsWith('.md')) continue;
           
           try {
-            const postResponse = await fetch(`_posts/${postFilename}`);
+            const postResponse = await fetch(`${basePath}_posts/${postFilename}`);
             
             // Handle potential file loading issues
             if (!postResponse.ok) {
@@ -126,12 +152,30 @@
         
         // Add a message if no posts were loaded
         if (blogPostsContainer.children.length === 0) {
-          blogPostsContainer.innerHTML = '<p>No blog posts found.</p>';
+          blogPostsContainer.innerHTML = `
+            <div class="error-message">
+              <p>No blog posts found. This could be due to:</p>
+              <ul>
+                <li>Incorrect file paths</li>
+                <li>Network connectivity issues</li>
+                <li>GitHub Pages configuration</li>
+              </ul>
+            </div>
+          `;
         }
       } catch (error) {
         console.error('Critical error loading blog posts:', error);
-        document.getElementById('blog-posts').innerHTML =
-          '<p>Error loading blog posts. Please check your local file setup or server configuration.</p>';
+        blogPostsContainer.innerHTML = `
+          <div class="error-message">
+            <p>Error loading blog posts. Possible reasons:</p>
+            <ul>
+              <li>Server configuration issues</li>
+              <li>Incorrect repository setup</li>
+              <li>GitHub Pages hosting problems</li>
+            </ul>
+            <p>Please check your repository settings and file structure.</p>
+          </div>
+        `;
       }
     }
 
